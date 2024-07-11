@@ -1,0 +1,64 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider          = "postgresql"
+  url               = env("DATABASE_URL")
+  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
+}
+
+// let's define model
+model User {
+  id          Int        @id @default(autoincrement())
+  email       String     @unique
+  password    String     @db.VarChar(60)
+  status      UserStatus @default(Pending)
+  Task        Task[]
+  role        UserRole   @default(User)
+  point       Float
+  credit      Decimal
+  socialLinks Json
+  color       Bytes?
+  createdAt   DateTime
+  updatedAt   DateTime   @updatedAt
+
+  @@map("users")
+}
+
+model Task {
+  // To use it in PostgreSQL versions 12.13 and earlier, you must enable the pgcrypto extension.
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title      String   @db.VarChar(120)
+  tags       String[] @default([])
+  note       String?  @db.Text
+  user       User     @relation(fields: [userId], references: [id]) // a task must belong to a user
+  userId     Int      @map("user_id")
+  isArchived Boolean  @default(false)
+  createdAt  DateTime
+  updatedAt  DateTime
+
+  @@map("tasks")
+}
+
+enum UserStatus {
+  Pending
+  Active
+}
+
+enum TaskStatus {
+  Pending
+  InProgress
+  Done
+}
+
+enum UserRole {
+  User
+  Admin
+}
